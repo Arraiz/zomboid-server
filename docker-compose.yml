@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # Nginx Proxy Manager
+  npm:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - '80:80'      # HTTP
+      - '443:443'    # HTTPS
+      - '81:81'      # Admin UI
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+    networks:
+      - proxy_network
+
+  pzserver:
+    build: .
+    container_name: pzserver
+    expose:
+      - "16261/udp"  # Game port
+      - "16262/udp"  # Steam query port
+    volumes:
+      - pz_data:/home/pzserver/Zomboid
+      - steam_data:/home/pzserver/.steam
+      - workshop_data:/home/pzserver/Steam
+    environment:
+      - GAME_PARAMS="-servername \"My PZ Server\" -adminpassword \"yourpassword\""
+    restart: unless-stopped
+    networks:
+      - proxy_network
+
+volumes:
+  pz_data:
+    driver: local
+  steam_data:
+    driver: local
+  workshop_data:
+    driver: local
+  npm_data:
+    driver: local
+  npm_letsencrypt:
+    driver: local
+
+networks:
+  proxy_network:
+    driver: bridge 
